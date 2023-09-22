@@ -115,8 +115,11 @@ func loginHandler(c echo.Context) error {
 	if req.Password == "" || req.Username == "" {
 		return c.String(http.StatusBadRequest, "Username or Password is empty")
 	}
+
+	log.Println(req.Username)
 	user := User{}
-	err := db.Get(&user, "SELECT Username, HashedPass FROM users WHERE Username=?", req.Username)
+	username := req.Username
+	err := db.QueryRow("SELECT * FROM users WHERE Username=?", username).Scan(&user.Username, &user.HashedPass)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return c.NoContent(http.StatusUnauthorized)
