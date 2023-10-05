@@ -33,6 +33,68 @@ func getCityInfoHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, city)
 }
 
+type countryName struct {
+	Name string `json:"name" db:"Name"`
+}
+
+type cityName struct {
+	Name string `json:"name" db:"Name"`
+}
+
+func getCountryCityListHandler(c echo.Context) error {
+	countryName := c.Param("countryName")
+	var countryCode string
+	db.Get(&countryCode, "SELECT Code FROM country WHERE Name=?", countryName)
+	if countryCode == "" {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	var cities []cityName
+	var cityNumber int
+	db.Get(&cityNumber, "SELECT COUNT(*) FROM city WHERE countryCode=?", countryCode)
+
+	for i := 0; i < cityNumber; i++ {
+		var oneCity cityName
+		db.Get(&oneCity, "SELECT Name FROM city WHERE countryCode=? LIMIT 1 OFFSET ?", countryCode, i)
+		if oneCity.Name == "" {
+			return c.NoContent(http.StatusNotFound)
+		}
+
+		cities = append(cities, oneCity)
+	}
+	return c.JSON(http.StatusOK, cities)
+
+}
+
+func getCountryInfoAllHandler(c echo.Context) error {
+	var countryNumber int
+	db.Get(&countryNumber, "SELECT COUNT(*) FROM country")
+	fmt.Println(countryNumber)
+	if countryNumber == 0 {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	var countries []countryName
+	for i := 0; i < countryNumber; i++ {
+		var oneCountry countryName
+		db.Get(&oneCountry, "SELECT Name FROM country LIMIT 1 OFFSET ?", i)
+		if oneCountry.Name == "" {
+			return c.NoContent(http.StatusNotFound)
+		}
+
+		countries = append(countries, oneCountry)
+	}
+
+	return c.JSON(http.StatusOK, countries)
+
+}
+
+func testHandler(c echo.Context) error {
+	var oneCity City
+	db.Get(&oneCity, "SELECT * FROM city LIMIT 1")
+	return c.JSON(http.StatusOK, oneCity)
+}
+
 func postCityHandler(c echo.Context) error {
 	var city City
 	err := c.Bind(&city)

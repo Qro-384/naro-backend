@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -66,10 +67,15 @@ func main() {
 
 	e.POST("/signup", signUpHandler)
 	e.POST("/login", loginHandler)
+	e.GET("/ping", func(c echo.Context) error { return c.String(http.StatusOK, "pong") })
+	e.GET("/test", testHandler)
+
 	withAuth := e.Group("")
 	withAuth.Use(userAuthMiddleware)
 	withAuth.GET("/cities/:cityName", getCityInfoHandler)
 	withAuth.POST("/cities", postCityHandler)
+	withAuth.GET("/countries", getCountryInfoAllHandler)
+	withAuth.GET("/country/:countryName", getCountryCityListHandler)
 	withAuth.GET("/whoami", getWhoAmIHandler)
 	e.Start(":8080")
 }
